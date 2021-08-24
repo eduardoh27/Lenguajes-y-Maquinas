@@ -1,19 +1,24 @@
 """
+       
 Proyecto 0 de LyM
-Ernesto José Duarte - Sección 3
+Ernesto José Duarte Mantilla - Sección 3
 Eduardo José Herrera Alba - Sección 3
+
 """
+
 
 def init_Variables()->dict:
     variables = {}
     return variables
-
+ 
 def add_Variable(variables, variable, valor)-> None:
     variables[variable] = valor
 
 def get_Value(variables, variable):
     return variables[variable]
 
+def exist_Variable(variables, variable):
+    return variable in variables
 
 def init_Keywords()->list:
     keywords = ["MOVE", "RIGHT", "LEFT", "ROTATE", "LOOK", "DROP", "FREE", "PICK", "POP", #SENCILLOS
@@ -23,13 +28,12 @@ def init_Keywords()->list:
 
 def iniciar_Programa():
     variables = init_Variables()
-    print(variables)
     keywords = init_Keywords()
-    print(keywords)
-    #add_Variable(variables, "n", 12)
-    #print(variables)
-    #get_Value(variables, "n")
-    lector_textfile("ejemplo.txt")
+    add_Variable(variables, "n", 12)
+    print(exist_Variable(variables, "n"))
+    
+    #lector_textfile("ejemplo.txt")
+
 
 def lector_textfile(nombre_archivo: str):
     archivo = open(nombre_archivo, "r")
@@ -39,8 +43,6 @@ def lector_textfile(nombre_archivo: str):
     linea = archivo.readline()
     lista_p = linea.split(" ")
     lista += lista_p
-
-    
 
     while len(linea)>0:
         print(linea)
