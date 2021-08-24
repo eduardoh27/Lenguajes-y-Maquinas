@@ -62,6 +62,7 @@ iniciar_Programa()
 
 """
 Dudas:
+
 1. Ignorar new lines y spaces
 2. split()
 """
