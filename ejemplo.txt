@@ -4,14 +4,14 @@ IF BLOCKEDP [MOVE 1
 NOP]
 
 (BLOCK
-IF BLOCKED [MOVE 1
+IF BLOCKEDP [MOVE 1
 NOP]
 LEFT 90
 )
 
 DEFINE one 1
 
-TO foo :c :P
+TO foo :c :p
 OUTPUT
    DROP :c
    FREE :p
@@ -21,9 +21,9 @@ foo 1 3
 
 
 TO goend
-output IF !BLOCKED [
+output IF !BLOCKEDP [
    (BLOCK MOVE 1
-	  goEnd)
+          goEnd)
    NOP
   ]
 END

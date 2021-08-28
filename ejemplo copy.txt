@@ -1,0 +1,21 @@
+ROTATE 3   
+
+LOOK N
+
+CHECK B 2
+NOP
+
+IF BLOCKEDP [
+MOVE 1      
+DEFINE bla 22]
+
+(REPEAT 3 [DEFINE bla 22 
+BLOCKEDP])
+
+(BLOCK MOVE 1 
+
+DEFINE bla 22 
+BLOCKEDP
+)
+
+
