@@ -302,12 +302,11 @@ def is_Type(variables, string, tipo):
     #elif tipo == "variable":
         
     return es_tipo
-def prueba(str):
-    print("Holamundo")
+
 
 # [ "]", NL, ")"]
 
-# [ "aaaa" - 0 , NL - 1 , NL -2 , NL - 3] len = 4 
+# [ "a" - 0 , NL - 1 , NL -2 , NL - 3] len = 4 
 # i = 1
 # i = 2
 # i = 3
