@@ -10,14 +10,41 @@ def init_Variables()->dict:
     variables = {}
     return variables
  
-def add_Variable(variables, variable, valor)-> bool:
+def add_Variable(variables, variable, valor, funciones)-> None:
+    funciones.pop(variable, None) #
     variables[variable] = valor
+
+def del_Variable(variables, variable):
+    variables.pop(variable, None)
 
 def get_Value(variables, variable):
     return variables[variable]
 
 def exist_Variable(variables, variable):
     return variable in variables
+
+def init_Funciones():
+    funciones = {}
+    return funciones
+
+def add_Funcion(funciones, funcion, params, variables)-> None:
+    variables.pop(funcion, None) #
+    funciones[funcion] = params
+
+def del_Funcion(funciones, funcion):
+    funciones.pop(funcion, None)
+
+def get_NumberParams(funciones, funcion):
+    n = len(funciones[funcion])
+    return n
+
+def get_Params(funciones, funcion):
+    return funciones[funcion]
+
+def exist_Funcion(funciones, funcion):
+    return funcion in funciones
+
+
 
 def init_Keywords()->list:
     keywords = ["MOVE", "RIGHT", "LEFT", "ROTATE", "LOOK", "DROP", "FREE", "PICK", "POP", #SENCILLOS
@@ -74,7 +101,8 @@ listaacomprobar = [Move,newline,if,(,),[,newline,move]]
 """
 
 
-def recorrer_Lista(lista, variables, keywords, inside_if=False, inside_block=False):
+def recorrer_Lista(lista, variables, keywords, funciones, 
+                    inside_if=False, inside_block=False, inside_func=False):
     correcto = True
     newCommand = True
     stop = False
@@ -96,6 +124,10 @@ def recorrer_Lista(lista, variables, keywords, inside_if=False, inside_block=Fal
                 correcto = False
                 print("En el block debe haber por lo menos 1 comando")
         
+        elif inside_func and lista[i] == "END":
+            i -= 1
+            stop = True
+        
         elif lista[i] == "NEWLINE":
             #if lista[i+1] != "NEWLINE": # ¿"\n" or " "? (or ""?) Lo hice cuando hay varios newlines dentro de un bloque
             #print("NEW",i)
@@ -104,8 +136,8 @@ def recorrer_Lista(lista, variables, keywords, inside_if=False, inside_block=Fal
         elif newCommand == True :
             CommandName = lista[i]
             print("CommandName",lista[i])
-            correcto, termina_en = isCommand(CommandName, i, lista, variables, keywords) 
-            if not minimo_1Command and inside_block and correcto:
+            correcto, termina_en = isCommand(CommandName, i, lista, variables, keywords, funciones)
+            if inside_block and not minimo_1Command and correcto:
                 minimo_1Command = True
                 
             i = termina_en
@@ -115,12 +147,14 @@ def recorrer_Lista(lista, variables, keywords, inside_if=False, inside_block=Fal
             # lo puse porque no se espera un nuevo comando. Ver "ERROR1" en screenshots
             print("ELSE i="+str(i))
             correcto = False
+        
+        print("correcto",correcto)
 
         i+=1
 
     return correcto, i
 
-def isCommand(CommandName, i, lista, variables, keywords):
+def isCommand(CommandName, i, lista, variables, keywords, funciones):
     "Verifica que si comando es correcto y regresa en qué parte de la lista termina"
 
     correcto = False
@@ -157,7 +191,7 @@ def isCommand(CommandName, i, lista, variables, keywords):
         print("T5. lista[i="+str(i)+"] " +lista[i])
         if lista[i+1].islower(): # ¿ and .isalpha()?
             if is_Type(variables, lista[i+2], "numero"):
-                add_Variable(variables, lista[i+1], lista[i+2])
+                add_Variable(variables, lista[i+1], lista[i+2], funciones)
                 termina_en = i+2
                 correcto = True
             else:
@@ -172,18 +206,17 @@ def isCommand(CommandName, i, lista, variables, keywords):
             # ¿Se permiten Newlines?
             
             if lista[i+2] == "[":
-                correcto, j = recorrer_Lista(lista[i+3:], variables, keywords, inside_if=True)
+                correcto, j = recorrer_Lista(lista[i+3:], variables, keywords, funciones, inside_if=True)
                 termina_en = i+3+j
         else:
-            print("La expresión del IF debe ser booleana")
-    
+            print("La expresión del IF debe ser booleana")  
 
     elif CommandName == "(":
         # ¿Podría haber newlines?
         print("T7. lista[i="+str(i)+"] " +lista[i])
 
         if lista[i+1] == "BLOCK":
-            correcto, j = recorrer_Lista(lista[i+2:], variables, keywords, inside_block=True)
+            correcto, j = recorrer_Lista(lista[i+2:], variables, keywords, funciones, inside_block=True)
             termina_en = i+2+j
             #print("termina_en dentro del BLOCK: ",termina_en, "lista[termina_en]: ",lista[termina_en])
         
@@ -192,7 +225,7 @@ def isCommand(CommandName, i, lista, variables, keywords):
                 # ¿Podría haber newlines?
                 if lista[i+3] == "[":
                     # ¿Podría haber newlines?
-                    correcto, j = recorrer_Lista(lista[i+4:], variables, keywords, inside_if=True)
+                    correcto, j = recorrer_Lista(lista[i+4:], variables, keywords, funciones, inside_if=True)
                     i += 4+j
                     if correcto:
                         i, correcto = ignore_Newlines(i+1, lista)
@@ -203,8 +236,49 @@ def isCommand(CommandName, i, lista, variables, keywords):
     elif CommandName == "TO":
         print("T8. lista[i="+str(i)+"] " +lista[i])
 
-        if lista[i+1] not in keywords: # ¿Será?
-            pass
+        if lista[i+1] not in keywords: # ¿Será? (nombre de funcion)
+            j = 2
+            parametros = []
+            while ":" == lista[i+j][0]:  # acepta 0 parámetros
+                parametros.append(lista[i+j])
+                add_Variable(variables, lista[i+j], None, funciones)
+                j += 1
+            add_Funcion(funciones, lista[i+1], parametros, variables)
+            # debo añadir la funcion y los parametros a la lista porque 
+            # necesito los parametros al usarlos en el bloque de comandos 
+            # dentro del cuerpo la función
+            
+            if lista[i+j] == "OUTPUT":
+                correcto, k = recorrer_Lista(lista[i+j+1:], variables, keywords, funciones, inside_func=True)
+                if correcto:
+                    termina_en = i+j+1+k
+                    correcto = True
+                else: # creo que a fin de cuentas da igual. Al fin y al cabo el programa solo dirá "INCORRECTO"
+                    for variable in parametros:
+                        del_Variable(variables, variable)
+                        del_Funcion(funciones, lista[i+1])
+            else: # creo que a fin de cuentas da igual. Al fin y al cabo el programa solo dirá "INCORRECTO"
+                for variable in parametros:
+                    del_Variable(variables, variable)
+                    del_Funcion(funciones, lista[i+1])
+
+    else:
+        if CommandName in funciones:
+            n = get_NumberParams(funciones, CommandName)
+
+            params_validos = True
+            if i+n <= len(lista)-1: # si no se sale de la lista
+                for j in range(1, n+1):
+                    if not is_Type(variables, lista[i+j], "numero"):
+                        params_validos = False
+            else: # si se sale de la lista no alcanza a recibir los parametros
+                params_validos = False
+
+            if params_validos:
+                correcto = True
+                termina_en = i+n
+        # buscar las funciones.
+        pass
             
     return correcto, termina_en
 
@@ -212,17 +286,17 @@ def isCommand(CommandName, i, lista, variables, keywords):
 def is_Type(variables, string, tipo):
     es_tipo = False
     if tipo == "numero":
-        if string.isdigit() or (exist_Variable(variables,string) and get_Value(variables,string).isdigit()):
+        if string.isdigit() or (exist_Variable(variables,string) and (get_Value(variables,string) == None or get_Value(variables,string).isdigit())):
             es_tipo = True
     
     elif tipo == "direccion":
         direcciones = ["N", "S", "W", "E"]
-        if string in direcciones or (exist_Variable(variables,string) and get_Value(variables,string) in direcciones):
+        if string in direcciones or (exist_Variable(variables,string) and (get_Value(variables,string) in direcciones or get_Value(variables,string) == None)):
             es_tipo = True
     
     elif tipo == "opcion":
         opciones = ["C", "B"]
-        if string in opciones or (exist_Variable(variables,string) and get_Value(variables,string) in opciones):
+        if string in opciones or (exist_Variable(variables,string) and (get_Value(variables,string) in opciones or get_Value(variables,string) == None)):
             es_tipo = True
 
     #elif tipo == "variable":
@@ -238,12 +312,12 @@ def is_Type(variables, string, tipo):
 # i = 3
 # [ "]", ")", Y, 6]
 
-def ignore_Newlines(i, lista, correcto):
+def ignore_Newlines(i, lista):
     """
     i: posición desde la cual debe empezar a ignorar los newlines (primer newline)
     retorna: posición del último newline
     """
-    
+    correcto = True
     if lista[i] == "NEWLINE":
         while lista[i+1] == "NEWLINE":
             i+=1
@@ -352,6 +426,8 @@ def iniciar_Programa():
 
     variables = init_Variables()
     keywords = init_Keywords()
+    funciones = init_Funciones()
+    #funciones = {"foo": [2,1], "print": []}
     
     #lista = lector_textfile("ejemplo.txt")
     #print(lista)
@@ -364,7 +440,7 @@ def iniciar_Programa():
     lista = lexer(nombre_archivo)
     print(lista)
 
-    resultado, _ = recorrer_Lista(lista, variables, keywords)
+    resultado, _ = recorrer_Lista(lista, variables, keywords, funciones)
     if resultado:
         print("The syntax is CORRECT.")
     else:
@@ -384,13 +460,14 @@ iniciar_Programa()
 """
 Dudas:
 
-1. Ignorar new lines y spaces
-2. split() Sí se puede usar.
+1. Ignorar newlines y spaces. RTA: ignorar espacios y tabs, pero no newlines
+2. split() RTA: Sí se puede usar.
 3. ¿Qué otras expresiones booleanas pueden haber además de BLOCKEDP y !BLOCKEDP?
 4. ¿Una expresión es necesariamente un bool?
 5. No existe indexación? Puede empezarse un command con indentación de 2, por ejemplo?
-6. ¿Al fin sí se deben separar los commands por newlines como dice el pdf?
+6. ¿Al fin sí se deben separar los commands por newlines como dice el pdf? RTA: sí
 7. ¿Una variable se puede llamar "carro1" o "1carro" o debe ser "carro"? (solo letras+)
+8. ¿Qué pasa si una función se llama igual a una variable?
 
 
 1. El comando no termina con \n necesariamente (ver ejemplo.txt línea 4, 8, 26)

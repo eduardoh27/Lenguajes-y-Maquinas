@@ -18,4 +18,13 @@ DEFINE bla 22
 BLOCKEDP
 )
 
+TO foo :c :p OUTPUT
+   DROP :c
+   FREE :p
+   foo 1 3
+    MOVE 3 
+END
 
+
+
+foo 2 4
