@@ -52,54 +52,6 @@ def init_Keywords()->list:
                 "DEFINE", "TO", ":", "OUTPUT", "END"]
     return keywords
 
-"""
-def recorrer_Lista_inicial(lista, variables, dentro_de_if=False):
-    correcto = True
-    newCommand = True
-    i = 0
-    while i < len(lista) and correcto:
-
-
-        if newCommand == True :
-            CommandName = lista[i]
-            correcto, termina_en = isCommand(CommandName, i, lista, variables) 
-            i = termina_en
-            newCommand = False
-
-        elif lista[i] == " ":
-            i = ignore_Spaces(i, lista)
-
-        elif lista[i] == "NEWLINE":
-            if lista[i+1] != "NEWLINE": # ¿"\n" or " "? (or ""?)
-                print(i)
-                newCommand = True   
-
-        else:
-            # lo puse porque no se espera un nuevo comando. Ver "ERROR1" en screenshots
-            print("ELSE i="+str(i))
-            correcto = False
-
-        i+=1
-    return correcto
-"""
-
-
-
-
-"""
-
-command ()[
-    move
-]
-if ()[
-    move
-    drop 3
-    
-]
-
-listaacomprobar = [Move,newline,if,(,),[,newline,move]]
-"""
-
 
 def recorrer_Lista(lista, variables, keywords, funciones, 
                     inside_if=False, inside_block=False, inside_func=False):
@@ -232,10 +184,9 @@ def isCommand(CommandName, i, lista, variables, keywords, funciones):
                         if lista[i] == ")" and correcto:
                             termina_en = i
                             #print("termina_en dentro del repeat: ",termina_en, "lista[termina_en]: ",lista[termina_en])
-
+#{funcion1: [:a, :b, :z], funcion2: [], ...}
     elif CommandName == "TO":
         print("T8. lista[i="+str(i)+"] " +lista[i])
-
         if lista[i+1] not in keywords: # ¿Será? (nombre de funcion)
             j = 2
             parametros = []
@@ -247,11 +198,12 @@ def isCommand(CommandName, i, lista, variables, keywords, funciones):
             # debo añadir la funcion y los parametros a la lista porque 
             # necesito los parametros al usarlos en el bloque de comandos 
             # dentro del cuerpo la función
-            
-            if lista[i+j] == "OUTPUT":
-                correcto, k = recorrer_Lista(lista[i+j+1:], variables, keywords, funciones, inside_func=True)
+            #newline
+            i, correcto = ignore_Newlines(i+j, lista)
+            if lista[i] == "OUTPUT" or lista[i] == "output":
+                correcto, k = recorrer_Lista(lista[i+1:], variables, keywords, funciones, inside_func=True)
                 if correcto:
-                    termina_en = i+j+1+k
+                    termina_en = i+1+k
                     correcto = True
                 else: # creo que a fin de cuentas da igual. Al fin y al cabo el programa solo dirá "INCORRECTO"
                     for variable in parametros:
@@ -306,7 +258,7 @@ def is_Type(variables, string, tipo):
 
 # [ "]", NL, ")"]
 
-# [ "a" - 0 , NL - 1 , NL -2 , NL - 3] len = 4 
+# [ "a" - 0 , r - 1 , b -2 , NL - 3] len = 4 
 # i = 1
 # i = 2
 # i = 3
@@ -436,7 +388,7 @@ def iniciar_Programa():
     nombre_archivo = input("Introduzca el nombre exacto del textfile: ")
     if ".txt" != nombre_archivo[-4:]:
         nombre_archivo += ".txt"
-    nombre_archivo = "ejemplo copy.txt"
+    nombre_archivo = "ejemplo.txt"
     lista = lexer(nombre_archivo)
     print(lista)
 
@@ -450,13 +402,6 @@ def iniciar_Programa():
     
 iniciar_Programa()
 
-
-"""
-
-
-
-"""
-
 """
 Dudas:
 
@@ -464,7 +409,7 @@ Dudas:
 2. split() RTA: Sí se puede usar.
 3. ¿Qué otras expresiones booleanas pueden haber además de BLOCKEDP y !BLOCKEDP?
 4. ¿Una expresión es necesariamente un bool?
-5. No existe indexación? Puede empezarse un command con indentación de 2, por ejemplo?
+5. No existe indentación? Puede empezarse un command con indentación de 2, por ejemplo?
 6. ¿Al fin sí se deben separar los commands por newlines como dice el pdf? RTA: sí
 7. ¿Una variable se puede llamar "carro1" o "1carro" o debe ser "carro"? (solo letras+)
 8. ¿Qué pasa si una función se llama igual a una variable?
@@ -499,4 +444,6 @@ falta colocar ignore NEWLINES por doquier. por ejemplo. ahi falla por los \n ent
 ]
 
 )
+
+Ver inicio clase 31/08 Cardozo!!!
 """
