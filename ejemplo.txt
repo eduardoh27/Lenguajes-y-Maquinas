@@ -17,6 +17,7 @@ OUTPUT
    DROP :c
    FREE :p
    MOVE n
+   
 END
 foo 1 3
 
