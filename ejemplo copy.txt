@@ -7,7 +7,8 @@ NOP
 
 IF BLOCKEDP [
 MOVE 1      
-DEFINE bla 22]
+DEFINE bla 22
+]
 
 (REPEAT 3 [DEFINE bla 22 
 BLOCKEDP])
@@ -18,7 +19,8 @@ DEFINE bla 22
 BLOCKEDP
 )
 
-TO foo :c :p OUTPUT
+TO foo :c :p 
+OUTPUT
    DROP :c
    FREE :p
    foo 1 3

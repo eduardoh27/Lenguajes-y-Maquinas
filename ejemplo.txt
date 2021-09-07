@@ -23,7 +23,7 @@ foo 1 3
 
 
 TO goend
-output IF BLOCKEDP [
+OUTPUT IF BLOCKEDP [
    (BLOCK MOVE 1
           goend)
    NOP
