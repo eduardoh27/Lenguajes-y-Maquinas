@@ -1,0 +1,93 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+
+procedure main(args:String[]) begin
+	GAutomataFrame.show(createAutomaton())
+end
+
+
+function createAutomaton():IPushdownAutomaton begin
+	A:= {"2","5","3"}
+	Q:=  {"I","x","÷","2","2=","2x0","2x1","2x1d","r1", "F"} ∪ {"3","3=","3x0","3x1","3x2","3x1d","3x2d","r2"}
+	∪ {"5","5=","5x0","5x1","5x2","5x3","5x4","5x1d","5x2d","5x3d","5x4d","r3","r4"}// Set of States
+	print('2'*4)
+	Σ:= {'2','5','3','×','x','q','r','=','+','÷'} 	// input Alphabet
+	Γ:= {'x','$','r'} 			// Alphabet of the Stack
+	
+	q₀:= "I" 				// init state
+	F:={"F"} 			// final states
+	
+	M:=GPushdownAutomaton(Q,Σ,Γ,q₀,F) // Función de transición
+	
+	M.delta("I","x",λ).push("$") // OJO: lambda o ""???
+   M.delta("x","x","x").push("x")
+	M.delta("x","÷",'÷').ignore()
+	
+	for each t in A do
+		T := Integer.parseInt(t)
+		M.delta("÷",t,t).ignore()
+		M.delta(t,t+"=",'=').ignore()
+		
+		if (t = "2") then
+			M.delta(t+"=",t+"=",'q').pop("xx")
+		
+		elseif (t="3") then
+			M.delta(t+"=",t+"=",'q').pop("xxx")
+			
+		else M.delta(t+"=",t+"=",'q').pop("xxxxx")
+		end
+		
+		// Residuo 0
+		M.delta(t+"=",t+"x0",'×').$skip("$")
+		M.delta(t+"x0","F",t).pop("$")
+
+		// Residuo 1
+		M.delta(t+"=",t+"x1",'×').pop("x")
+		M.delta(t+"x1",t+"x1d",t).$skip("$")
+		M.delta(t+"x1d","r1",'+').ignore()
+		M.delta("r1","F",'r').pop("$")
+		
+		if (t="3") or (t="5") then 		// Residuo 2
+			M.delta(t+"=",t+"x2",'×').pop("xx")
+			M.delta(t+"x2",t+"x2d",t).$skip("$")
+			M.delta(t+"x2d","r2",'+').ignore()
+			M.delta("r2","r2",'r').push("r")
+			M.delta("r2","F",'r').pop("$r")
+		end
+		
+		if  (t="5") then 		// Residuo 3 
+			M.delta("5=","5x3",'×').pop("xxx")
+			M.delta("5x3","5x3d",'5').$skip("$")
+			M.delta("5x3d","r3",'+').ignore()
+			M.delta("r3","r3",'r').push("r")
+			M.delta("r3","F",'r').pop("$rr")
+			
+			// residuo 4
+			M.delta("5=","5x4",'×').pop("xxxx")
+			M.delta("5x4","5x4d",'5').$skip("$")
+			M.delta("5x4d","r4",'+').ignore()
+			M.delta("r4","r4",'r').push("r")
+			M.delta("r4","F",'r').pop("$rrr")
+		end
+		
+	end
+	
+
+	return M
+end
+
+/*
+ * Accepted:
+xxxxxx÷2=qqq×2
+xxxxxxx÷2=qqq×2+r
+xx÷2=q×2
+* 
+xxxxx÷3=q×3+rr
+xxxxxxx÷3=qq×3+r
+xxxxxxxxx÷3=qqq×3
+*  
+xxxxxx÷5=q×5+r
+xxxxxxxxxxxx÷5=qq×5+rr
+xxxxxxxxx÷5=q×5+rrrr
+* 
+ */

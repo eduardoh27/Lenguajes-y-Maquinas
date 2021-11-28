@@ -1,0 +1,724 @@
+/*
+Gramatica para el Robot:
+Autor: Alejandro Arango
+Modificado por: Silvia Takahashi
+Modificado por: Juan Pablo Morales.
+Agregadas producciones para manejar globos
+Modificado por Silvia Takahashi
+Eliminadas producciones para manejar globos
+Agregado el esqueleto para la traduccion
+Modificado por Silvia Takahashi 
+Re: Agregar Reglas para el manejo de globos
+Modificado por Saulo Daza y Sonia Vivas
+Modificado por Silvia Takahashi
+Eliminadas reglas de traducciï¿½n DE  MARCROS
+Cambio del lenguaje de comandos
+Modificado por Silvia Takahashi: algunas Reglas para traduccion
+Modificado por Silvia Takahashi: Cambio en el lenguaje
+Abril: 2008 - Simplificado apra solo interpretaciï¿½n
+ **/
+
+options 
+{
+	LOOKAHEAD=1; 
+	IGNORE_CASE=false;  //#
+	STATIC = false;
+	
+}
+   
+
+PARSER_BEGIN(Robot)
+
+package uniandes.lym.robot.control;
+
+import uniandes.lym.robot.kernel.*;
+import java.awt.Point;
+import java.io.*;
+import java.util.Vector;
+import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.concurrent.ThreadLocalRandom;
+
+@SuppressWarnings("serial")
+public class Robot 
+{
+
+
+	private RobotWorldDec world;
+	
+	
+	void setWorld(RobotWorld w)
+		{
+		world = (RobotWorldDec) w;	
+		}
+	
+	String salida=new String();
+	boolean cumple = false;
+	boolean isBlocked = false;
+	boolean areItems = false;
+	//Hashtable<String, String> variables = new Hashtable<String, String>();
+	HashMap<String, String> variables = new HashMap<String, String>();
+	HashMap<String, ArrayList<String>> funciones = new HashMap<String, ArrayList<String>>();
+	//ArrayList commands= new ArrayList();
+	//HashMap<String, HashMap> comandos = new HashMap<String, HashMap>();
+	
+}
+PARSER_END(Robot)
+
+SKIP:
+{
+	" "
+	|	"\r"
+	|	"\t"
+//	| "\n"
+}
+
+TOKEN: /* Nombres de Comandos */
+{
+			<T_MOVE:  "MOVE">
+		| 	<T_RIGHT: "RIGHT">
+		| 	<T_LEFT: "LEFT">
+		| 	<T_ROTATE: "ROTATE">
+		| 	<T_LOOK: "LOOK">
+		| 	<T_DROP: "DROP">
+		| 	<T_FREE: "FREE">
+		| 	<T_PICK: "PICK">
+		|  < T_POP: "POP" >
+		|  < T_CHECK: "CHECK" >
+		|  < T_BLOCKEDP: "BLOCKEDP" >
+		|  < T_NBLOCKEDP: "!BLOCKEDP" >
+		|  < T_NOP: "NOP" >
+		|  < T_DEFINE: "DEFINE" >
+		|  < T_BLOCK: "BLOCK" >
+		|  < T_REPEAT: "REPEAT" >
+		|  < T_IF: "IF" >
+		|  < T_TO: "TO" >
+		|  < T_OUTPUT: "OUTPUT" >
+		|  < T_END: "END" >
+		|  < NEWLINE: "\n" >
+}
+
+TOKEN :
+{
+		<T_BALLOONS:  "B" >
+		|	<T_CHIPS:    "C"  >
+		
+		|	<T_NORTH:    "N"  >
+		|	<T_EAST:    "E"  >
+		|	<T_WEST:    "W"  >
+		|	<T_SOUTH:    "S"  >
+}
+
+
+TOKEN :
+{
+		<NUMERO: (<DIGIT>)+ >
+		|  	<#DIGIT: ["0"-"9"] >
+}
+
+TOKEN :
+{
+     	< #MAY: ["A"-"Z"] >
+		|   < #MIN: ["a"-"z"] >
+		| <VAR: ( <MIN> )+ >
+		| <FUN: (<MAY>|<MIN>)+ >        
+}
+
+
+	boolean command(StringBuffer sistema) :
+	{	
+		int x = 0;
+		String nuevaDir = new String(); //nueva dirección
+		String retorno = new String();
+		String item = new String();
+		salida=new String();
+		String var = new String();
+	}
+	
+	{
+		(
+		  commandMove(x)
+		|   commandRight(x)
+		| 	commandLeft(x)
+		| 	commandRotate(x)
+		|   commandLook(nuevaDir)
+		| 	commandDrop(x)
+		| 	commandFree(x)
+		| 	commandPick(x)
+		| 	commandPop(x)
+		| 	commandCheck(item, x)
+		| 	commandBlockedp()
+		|   commandNBlockedp()
+		| 	commandNop()
+		| 	commandDefine(var, x)
+		
+		|   commandBlock(x, nuevaDir, item, var)
+		|   commandRepeat(x, nuevaDir, item, var)
+		| 	commandIf(x, nuevaDir, item, var)
+		|   commandDefFunction(x, nuevaDir, item, var)
+		|   commandCallFunction()
+		
+		) "\n"
+
+
+		{
+		  //  try {
+	    	//		 Thread.sleep(1);
+	    	  //   } catch (InterruptedException e) {
+	    		//	        System.err.format("IOException: %s%n", e);
+	    		//	    }
+	    			 
+			sistema.append(salida);
+			return true;
+		}
+     |  "\n" { return true; }
+
+		| <EOF> {return false;} 
+	}
+
+void commandIf(int x, String nuevaDir, String item, String var):
+{cumple = false;}
+{
+	< T_IF > (getCondIf(item, x)) "["
+	{if (cumple){
+	  multipleCommands(x, nuevaDir, item, var);
+	  }
+	else {commandNop();} } "]" "\n"
+}
+
+
+int getCondIf(String item, int x):
+{
+}
+{
+(commandCheck(item, x) | commandBlockedp() | commandNBlockedp())
+{
+return x;
+}
+}
+
+
+
+
+void commandRepeat(int x, String nuevaDir, String item, String var):
+{boolean estaV = true;}
+{
+  < T_REPEAT >(x=valorNumerico()) "[" (multipleCommands(x, nuevaDir, item, var))"]" "\n"
+}
+
+
+void commandCallFunction():
+{ArrayList<String> param = new ArrayList<String>();
+ boolean seEncuentra = true;
+ ArrayList<String> llave;
+ Token a;
+}
+{
+  (a = < FUN >) {seEncuentra = funciones.containsKey(token.image); if (seEncuentra == false) {throw new Error("La función no ha sido declarada " + token.image);}}
+  ((< NUMERO > {param.add(token.image);})(< NUMERO > {param.add(token.image);})*"\n")?
+
+  {llave = funciones.get(a.image);
+   if (llave.size() == param.size()){
+       for (int i = 0; i < param.size(); i++){
+         String elemento = (String) param.get(i);
+         String nombre = (String) llave.get(i);
+         variables.replace(nombre, elemento);
+         }
+    }else if (llave.size() > param.size()){
+     	throw new Error("Faltan parametros en la funcion");
+    }else{
+      throw new Error("Hay mas parametros de los esperados en la funcion");} 
+ }
+}
+
+void commandDefFunction(int x, String nuevaDir, String item, String var):
+{Token t;
+ ArrayList<String> parametros;}
+{
+  < T_TO >(t = < FUN >)(parametros = params()) {funciones.put(t.image, parametros);} ("\n")
+  < T_OUTPUT >  "\n" multipleCommands(x, nuevaDir, item, var) < T_END > "\n"
+}
+
+ArrayList params():
+{ArrayList<String> para = new ArrayList<String>();}
+{
+  (":"< VAR > {para.add(token.image); variables.put(token.image, "");}
+  (":"< VAR > {para.add(token.image); variables.put(token.image, "");} )* )?
+  {return para;}
+}
+
+void commandBlock(int x, String nuevaDir, String item, String var):
+	{ }
+	{ 
+		"("<T_BLOCK> multipleCommands(x, nuevaDir, item, var)")"
+	}
+
+void multipleCommands(int x, String nuevaDir, String item, String var):
+	{
+	}
+	{
+		((commandMove(x)
+		|   commandRight(x)
+		| 	commandLeft(x)
+		| 	commandRotate(x)
+		|   commandLook(nuevaDir)
+		| 	commandDrop(x)
+		| 	commandFree(x)
+		| 	commandPick(x)
+		| 	commandPop(x)
+		| 	commandCheck(item, x)
+		| 	commandBlockedp()
+		| 	commandNop()
+		| 	commandDefine(var, x)
+		 )(< NEWLINE >)*)*
+	}
+
+void commandDefine(String var, int x):
+	{ }
+	{ 
+		<T_DEFINE> (var = variable()) (x=numero()){addVariable(var, x); salida = "Command: DEFINE";}
+	}
+
+void commandNop():
+	{ }
+	{ 
+		<T_NOP> {salida = "Command: NOP";}
+	}
+
+void commandBlockedp():
+	{ }
+	{ 
+		<T_BLOCKEDP> {isBlocked(); salida="Command: BLOCKEDP";}
+	}
+
+void commandNBlockedp():
+	{ }
+	{ 
+		<T_NBLOCKEDP> {isNBlocked(); salida="Command: NBLOCKEDP";}
+	}
+
+void commandCheck(String item, int x):
+	{ }
+	{ 
+		<T_CHECK>(item = getItem())(x=valorNumerico()){checkItem(item,x);salida="Command: CHECK";}
+	}
+
+void commandPop(int x):
+	{ }
+	{ 
+		<T_POP>  x=valorNumerico() {world.popBalloons(x); salida = "Command: POP";}
+	}
+
+void commandPick(int x):
+	{ }
+	{ 		
+		<T_PICK>  x=valorNumerico() {world.pickChips(x); salida = "Command: PICK";}
+	}
+
+void commandFree(int x):
+	{ }
+	{ 
+		<T_FREE>  x=valorNumerico() {world.putBalloons(x); salida = "Command: FREE";}
+	}
+
+void commandDrop(int x):
+	{ }
+	{ 
+		<T_DROP>  x=valorNumerico() {world.putChips(x); salida = "Command: DROP";}
+	}
+
+void commandLook(String nuevaDir):
+	{ }
+	{ 
+		<T_LOOK> nuevaDir=actualFacing() {getLook(nuevaDir); salida = "Command: LOOK";}
+	}
+
+void commandRotate(int x):
+	{ }
+	{ 
+		<T_ROTATE> x=valorNumerico() {getRotation(x); salida = "Command: ROTATE";}
+	}
+
+void commandLeft(int x):
+	{ }
+	{ 
+		<T_LEFT> x=valorNumerico() {getLeft(x); salida = "Command: LEFT";}
+	}
+
+	void commandRight(int x):
+	{ }
+	{ 
+		<T_RIGHT> x=valorNumerico() {getRight(x); salida = "Command: RIGHT";}
+	}
+	
+	void commandMove(int x):
+	{ }
+	{ 
+		<T_MOVE>  x=valorNumerico() {world.moveForward(x); salida = "Command: MOVE ";}
+	}
+
+	void addVariable(String var, int x):
+	{}
+	{ 
+	{variables.put(var, String.valueOf(x));}
+	}
+
+	String variable():
+	{String name;
+	}
+	{< VAR >
+	{
+	 name = token.image;
+	 return name;
+	}
+	}
+	
+	
+	void isBlocked():
+	{}
+	{{
+	String respuesta = new String();
+	Point actualPos = world.getPosition();
+	boolean bloqueado = world.isBlocked(actualPos);
+	if (bloqueado) {respuesta = "Está bloqueado"; isBlocked = true; cumple = true;}
+	else {respuesta = "No está bloqueado"; isBlocked = false; cumple = false;}
+	}}
+
+	void isNBlocked():
+	{}
+	{{
+	String respuesta = new String();
+	Point actualPos = world.getPosition();
+	boolean bloqueado = world.isBlocked(actualPos);
+	if (bloqueado) {respuesta = "Está bloqueado"; isBlocked = true; cumple = false;}
+	else {respuesta = "No está bloqueado"; isBlocked = false; cumple = true;}
+	}}
+
+	void checkItem(String item, int x):
+	{}
+	{{
+	String respuesta = new String();
+	Point actualPos = world.getPosition();
+	boolean condicion = false;
+	if (item == "B") {
+		if (world.countBalloons() == x) {condicion = true;}
+	   }
+	else {
+	    if (world.chipExists() && x == 1) {condicion = true;}
+	    else if (!world.chipExists() && x == 0) {condicion = true;}
+		}
+		
+	if (condicion) {respuesta += "Sí hay "+String.valueOf(x)+" "+item;
+	areItems = true; cumple = false;}
+	else {respuesta += "No hay "+String.valueOf(x)+" "+item;
+	areItems = false; cumple = false;}
+	}}
+	
+
+	String getItem():
+	{
+	  String item;
+	}
+	{
+	 (item = getBalloons() | item = getChips())
+	 {
+	 	return item;
+	 }
+	}
+
+	String getBalloons():
+	{
+	  String name;
+	}
+	{
+	 <T_BALLOONS>
+	 {
+	   name = token.image;
+	   return name;
+	 }
+	}
+
+	String getChips():
+	{
+	  String name;
+	}
+	{
+	 <T_CHIPS>
+	 {
+	   name = token.image;
+	   return name;
+	 }
+	}
+
+
+
+
+
+////////////////////////
+
+	void getLook(String nueva):
+	{ 
+	  }
+	{	
+	{
+	 int actual = world.getFacing();
+	 int rotaciones = 0;
+	 
+	 if (nueva == "N") { 
+	 	if (actual == 0) {
+	 	    rotaciones = 0;
+	 	}
+	 	else if (actual == 1) {
+	 	  	rotaciones = 2;
+	 	}
+	 	else if (actual == 2) {
+	 	    rotaciones = 3;
+	 	}
+	 	else if (actual == 3) {
+	 	    rotaciones = 1;
+	 	}
+	 }
+	 else if (nueva == "E") { 
+	 	if (actual == 0) {
+	 	    rotaciones = 1;
+	 	}
+	 	else if (actual == 1) {
+	 	    rotaciones = 3;
+	 	}
+	 	else if (actual == 2) {
+			rotaciones = 0;
+	 	}
+	 	else if (actual == 3) {
+	 	    rotaciones = 2;
+	 	}
+	 }
+	 else if (nueva == "S") { 
+	 	if (actual == 0) {
+	 	    rotaciones = 2;
+	 	}
+	 	else if (actual == 1) {
+	 	    rotaciones = 0;
+	 	}
+	 	else if (actual == 2) {
+	 	    rotaciones = 1;
+	 	}
+	 	else if (actual == 3) {
+	 	    rotaciones = 3;
+	 	}
+	 }
+	 else if (nueva == "W") { 
+	 	if (actual == 0) {
+	 	    rotaciones = 3;
+	 	}
+	 	else if (actual == 1) {
+	 	    rotaciones = 1;
+	 	}
+	 	else if (actual == 2) {
+			rotaciones = 2;
+	 	}
+	 	else if (actual == 3) {
+	 		rotaciones = 0;
+	 	}
+	 }
+	 int i;
+	 for(i=0; i < rotaciones; i++) {
+	     world.turnRight();
+	 }
+	}
+	}
+
+	String actualFacing():
+	{
+	  String imagen;
+	}
+	{
+	 (imagen = getNorth() | imagen = getSouth() | imagen = getWest() | imagen=getEast())
+	 {
+	 	return imagen;
+	 }
+	}
+
+	String getNorth():
+	{
+	  String name;
+	}
+	{
+	 <T_NORTH >
+	 {
+	   name = token.image;
+	   return name;
+	 }
+	}
+
+	String getSouth():
+	{
+	  String name;
+	}
+	{
+	 <T_SOUTH >
+	 {
+	   name = token.image;
+	   return name;
+	 }
+	}
+
+	String getWest():
+	{
+	  String name;
+	}
+	{
+	 <T_WEST >
+	 {
+	   name = token.image;
+	   return name;
+	 }
+	}
+
+
+	String getEast():
+	{
+	  String name;
+	}
+	{
+	 <T_EAST >
+	 {
+	   name = token.image;
+	   return name;
+	 }
+	}
+
+
+
+
+	void getLeft(int x):
+	{
+	}
+	{
+	{int veces = x / 90;
+	  if (x % 90 == 0) {
+		 int modulo = veces % 4;
+	     int derecha = 4-modulo;
+	     veces = derecha;
+	     int i;
+	  	  	 for(i=0;i<veces;i++) {
+	  	      	 world.turnRight();
+	  	  		}
+	     }
+	else {
+	  throw new Error("El robot no puede girar "+ x +" grados ");
+		}
+	}
+	}
+
+
+	void getRight(int x):
+	{
+	}
+	{
+	{int veces = x / 90;
+	  if (x % 90 == 0) {
+	     int i;
+	  	  	 for(i=0;i<veces;i++) {
+	  	      	 world.turnRight();
+	  	  		}
+	     }
+	else {
+	  throw new Error("El robot no puede girar "+ x +" grados ");
+		}
+	}
+	}
+
+
+	void getRotation(int x):
+	{}
+	{   
+	{if (x % 90 == 0) {
+	      int veces = x / 90;
+	      boolean sentido = ThreadLocalRandom.current().nextBoolean();
+	      if (!sentido) {
+	          int modulo = veces % 4;
+	          int derecha = 4-modulo;
+	          veces = derecha;
+	        }
+	  	  int i;
+	  	  for(i=0;i<veces;i++) {
+	  	      world.turnRight();
+	  	  }
+	  }
+	  else {
+	  throw new Error("El robot no puede girar "+ x +" grados ");
+	  }
+	}
+	}
+
+	/**
+	 *  reconoce un numero entero sin signo
+	 * @return el valor entero correspondiente al valor reconocido
+	 */
+
+
+	int valorNumerico():
+	{
+	  int x;
+	}
+	{
+	(x=numero() | x=varDefined())
+	{
+	return x;
+	}
+	}
+
+
+	
+	int numero() throws Error:
+	{	
+		int total=1;
+	}
+	{
+		<NUMERO>
+		{
+			try 
+			{
+				total = Integer.parseInt(token.image);
+			} 
+			catch (NumberFormatException ee) 
+			{
+				// Dada la forma de NUMERO, sabemos que solo puede tener dï¿½gitos
+				// Por lo tanto, lo unico que podria pasar es que el numero sea muy grande
+				throw new Error("Number out of bounds: "+token.image+"!!");
+			}
+			return total;
+		}
+	}
+
+
+	int varDefined() throws Error:
+	{	
+		Integer total=1; // No sabemos por qué ese 1
+	}
+	{
+		< VAR >
+		{
+			try 
+			{
+			  	total = Integer.parseInt(variables.get(token.image));
+				
+			} 
+			catch (NumberFormatException ee) 
+			{
+				// Dada la forma de NUMERO, sabemos que solo puede tener dï¿½gitos
+				// Por lo tanto, lo unico que podria pasar es que el numero sea muy grande
+				throw new Error("Number out of bounds: "+token.image+"!!");
+			}
+
+			if (total == null) 
+			{throw new Error("La variable no había sido definida: "+token.image+"!!"); }
+
+			return total;
+		}
+	}
+
+
+

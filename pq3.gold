@@ -1,0 +1,176 @@
+
+using gold.**
+
+procedure main(args:String[]) begin
+	
+	var sc:java.util.Scanner(System.$in)
+	coder:=createCoder()
+   	deCoder:=createDecoder()
+    
+    
+    //GAutomataFrame.show(coder)
+    //GAutomataFrame.show(deCoder)
+   
+ 	
+  	Utilities.testCodeDecode (coder, deCoder)
+	
+	
+end
+
+
+
+
+
+function createCoder():ITransducer begin
+	
+	Bits := {0,1} 
+	Q:= Bits × Bits × Bits // states
+	
+	In :={ 'a', 'b', 'c'}   // input alphabet
+	Out:=('0'‥'7') // output alphabet
+	q₀:= ⟨0,0,0⟩ // init state
+	F:=	 Q // final state(s)
+
+	return 	GDeterministicTransducer(Q,In,Out,q₀,F,δ,g,h)
+end
+
+function δ(⟨ba,bb,bc⟩, letter) begin // state transition
+	if letter = 'a' then return ⟨(ba+1)mod 2,bb,bc⟩
+
+	elseif letter = 'b' then return ⟨ba,(bb+1)mod 2,bc⟩ 
+		
+	else return ⟨ba,bb,(bc+1)mod 2⟩  // letter = 'c'
+		
+	end
+	
+end
+
+function g(⟨ba,bb,bc⟩) begin // state output
+	return ba*2*2 + bb*2 + bc
+end
+
+function h(⟨ba,bb,bc⟩, letter) begin // transition output
+	return λ 
+end
+
+
+
+
+
+
+
+function createDecoder():ITransducer begin
+	
+	Bits := {0,1} 
+	Q:= Bits × Bits × Bits   // states
+	
+	In := ('0'‥'7')          // input alphabet
+	Out:= {'a', 'b', 'c'}   // output alphabet    //se debe colocar empty string como output?????????
+
+	q₀:= ⟨0,0,0⟩              // init state
+	F:=	 Q                   // final state(s)
+
+	return 	GDeterministicTransducer(Q,In,Out,q₀,F,δ1,g1,h1)
+end
+
+
+function δ1(⟨ba,bb,bc⟩, number) begin // state transition
+	if number = '0' then return ⟨0,0,0⟩
+	elseif number = '1' then return ⟨0,0,1⟩	
+	elseif number = '2' then return ⟨0,1,0⟩	
+	elseif number = '3' then return ⟨0,1,1⟩
+	elseif number = '4' then return ⟨1,0,0⟩
+	elseif number = '5' then return ⟨1,0,1⟩
+	elseif number = '6' then return ⟨1,1,0⟩
+	else return ⟨1,1,1⟩  // number = '7'
+	end
+	
+end
+
+function g1(⟨ba,bb,bc⟩) begin // state output
+	return λ 
+end
+
+function h1(⟨ba,bb,bc⟩, number) begin // transition output
+	if number = '0' then 
+		if ba != 0 then return 'a'
+		elseif bb != 0 then return 'b'
+		elseif bc != 0 then return 'c'
+		else return λ
+		end
+		
+	elseif number = '1' then 
+		if ba != 0 then return 'a'
+		elseif bb != 0 then return 'b'
+		//elseif bc!= 1 then return 'c'
+		else return 'c'
+		//else return λ
+		end	
+	
+	elseif number = '2' then 
+		if ba != 0 then return 'a'
+		elseif bb != 1 then return 'b'
+		//elseif bc != 0 then return 'c'
+		else return 'c'
+		//else return λ
+		end
+	
+	elseif number = '3' then 
+		if ba != 0 then return 'a'
+		elseif bb != 1 then return 'b'
+		//elseif bc!= 1 then return 'c'
+			else return 'c'
+		//else return λ
+		end	
+	
+	elseif number = '4' then 
+		if ba != 1 then return 'a'
+		elseif bb != 0 then return 'b'
+		//elseif bc!= 0 then return 'c'
+			else return 'c'
+		//else return λ
+		end
+	
+	elseif number = '5' then 
+		if ba != 1 then return 'a'
+		elseif bb != 0 then return 'b'
+		//elseif bc != 1 then return 'c'
+			else return 'c'
+		//else return λ
+		end
+	
+	elseif number = '6' then 
+		if ba != 1 then return 'a'
+		elseif bb != 1 then return 'b'
+		//elseif bc != 0 then return 'c'
+			else return 'c'
+		//else return λ
+		end
+		
+	elseif number = '7' then 
+		if ba != 1 then return 'a'
+		elseif bb != 1 then return 'b'
+		//elseif bc != 1 then return 'c'
+			else return 'c'
+		//else return λ
+		end
+		
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
