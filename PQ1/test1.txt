@@ -1,0 +1,166 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+PARSER_BEGIN(ParserProlog)
+package uniandes.teolen.parserJavaCC.parserProlog;
+
+import java.util.*;
+ 
+public class ParserProlog {
+
+} 
+
+PARSER_END(ParserProlog)
+
+SKIP :
+{
+ 	" " | "\r" | "\t" | "\n"
+
+}
+TOKEN : /* OPERATORS */
+{
+    <ARROW: ":-">
+}
+
+TOKEN :
+{
+    < INT: ( <DIGIT> )( <DIGIT> )* >
+|   < #DIGIT: "0" | "1" | "2"| "3" | "4" | "5" |  "6" | "7" | "8" |"9" >
+|   < #MAY: ["A"-"Z"] >
+|   < #MIN: ["a"-"z"] >
+|   < PN: "PN" >
+|   < NP: "NP" >
+|   < PLACES: "PLACES" >
+|   < TRANSITIONS: "TRANSITIONS" >
+|   < VAR:  <MAY>  ( <MAY > | < MIN > | < DIGIT > )* >
+|   < NOMB:  <MIN>  (< DIGIT >| <MAY > | < MIN >)* >
+}
+
+void hr():
+{}
+{
+inicio()
+	}
+
+void functor():
+{}
+{
+
+  	< VAR> ("(" args() ")")?
+}
+
+void functors():
+{
+}
+{
+ functor() (","  functor())*
+}	
+
+
+void arg():
+{}
+{
+  < INT > | functor() | list() | < VAR >
+}
+void args():
+{ }
+{
+arg() (","  arg())*
+
+}
+
+
+void list() throws Error:
+{}
+
+{
+
+"[" [ args() ("|" arg())?] "]"
+
+}
+
+void inicio():
+{ }
+{
+<PN> < VAR > c()
+}
+
+void c():
+{ }
+{
+(p()) (t()) <NP>
+}
+
+
+void p():
+{ }
+{
+< PLACES > pspecs()
+}
+
+void pspecs():
+{ }
+{
+pspec()(","  pspec())*
+}
+
+void pspec():
+{ }
+{
+< VAR > "(" < INT > ")"
+}
+
+
+void t():
+{ }
+{
+<TRANSITIONS>  tspecs()
+}
+
+void tspecs():
+{ }
+{
+tspec()(";"  tspec())*
+}
+
+void tspec():
+{ }
+{
+< VAR > "(" input() "," output() ")"
+}
+
+void input():
+{}
+{
+"{" places() "}"
+}
+
+//falta colocar que pueda haber cero
+
+void places():
+{}
+{
+place() (","  place())* 
+}
+
+void place():
+{}
+{
+<  VAR >
+}
+
+void output():
+{}
+{
+input() 
+}
+
+
+
+
+  

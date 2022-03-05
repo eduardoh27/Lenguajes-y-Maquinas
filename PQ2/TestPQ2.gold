@@ -1,0 +1,48 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+using gold.structures.set.*
+
+
+procedure main(args:String[]) begin
+	A:= ('1' ‥ '7')
+	B := A ∪ {'+', '-'}
+	//C := Ø × A
+	//print C
+	D := ℘(Ø) × A
+	//print D
+	
+	Q:= (℘(A)× B) ∪ {"err"} ∪ {⟨ Ø, "INIT"⟩}
+	Σ:= A ∪ {'+', '-'}
+	
+	q₀:= ⟨ Ø, "INIT"⟩
+	F:= D ∪ {q₀}
+	M:=GDeterministicAutomaton(Q,Σ,q₀,F,d)
+	
+	
+	print "The  empty string is "+(M.acceptsString(λ)?"accepted!":"rejected.")
+	
+	if (args.length != 0  and args[0]="GUI") then
+		GAutomataFrame.show(M)
+	else
+		Utilities.test(M) // function found in utilities .
+	end
+end
+
+
+function d(q,x) begin // q=err
+  return q
+end
+
+
+function d(⟨S,q⟩, x) begin
+	A:= ('1' ‥ '7')
+	signs := {'+', '-'}					
+		
+	if q="INIT" and x∉signs then return ⟨ S∪{x}, x⟩ // init state
+	elseif q∈A and x='-' then return ⟨ S, '-'⟩
+	elseif q∈A and x='+' then return ⟨ S, '+'⟩
+	elseif q='-' and x∈A then return ⟨ S\{x}, x⟩
+	elseif q='+' and x∈A then return ⟨ S∪{x}, x⟩
+	else return "err"  
+	end
+end

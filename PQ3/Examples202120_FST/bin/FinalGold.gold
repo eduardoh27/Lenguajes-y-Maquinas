@@ -1,0 +1,67 @@
+
+using gold.**
+
+procedure main(args:String[]) begin
+	
+	var sc:java.util.Scanner(System.$in)
+	coder:=createCoder()
+    Utilities.test(coder)
+end
+
+
+
+function createCoder():ITransducer begin
+	
+	pos_i := (0‥2) // (i%3)
+	suma_digs := (0‥3)
+	
+	A:= pos_i × suma_digs
+	B:= pos_i × suma_digs × {'x'}
+	Q:= A ∪ B ∪ {'E','F'}  // states
+	
+	In := ('0'‥'9') ∪ {'x','$'} // input alphabet
+	Out:=('0'‥'3') ∪ {'x','$'} 				// output alphabet
+	
+	q₀:= ⟨1,0⟩	// 			 // init state
+	F:=	{'F'}				// final state(s)
+
+	return 	GDeterministicTransducer(Q,In,Out,q₀,F,δ,g,h)
+end
+
+function δ(state, x) begin // state transition
+	
+	if |state| = 3 then 
+		if x = '$' then return 'E'
+		else return ⟨ ( (state[0]+1) mod 3), x mod (( (state[0]+1) mod 3)+2)⟩
+		end
+	
+	elseif |state| = 2 then 
+		
+		if x in ('1'‥'9') then return ⟨state[0], (state[1] + x) mod (state[0] + 2)⟩
+		elseif x = 'x' then return ⟨state[0], state[1], 'x'⟩
+		elseif x = '$' then return 'F'
+		else return 'E'
+		end
+		
+	else return 'E'
+	end
+	
+end
+
+function g(state) begin // state output
+	if state = 'F' then return '$'
+	else return λ 
+	end
+end
+
+function h(state, x) begin // transition output
+	if |state| = 3 then return 'x'
+	elseif state = 'F' then return λ
+	elseif state = 'E' then return λ
+	elseif x = '$' then return state[1]  
+	elseif x = 'x' then return state[1]
+	
+	else return λ 
+	end
+end
+

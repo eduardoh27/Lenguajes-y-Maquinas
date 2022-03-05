@@ -1,0 +1,45 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+
+procedure main(args:String[]) begin
+    GAutomataFrame.show(createAutomaton())
+end
+function createAutomaton():IPushdownAutomaton begin
+    Σ:={'2','5','3','×','q','r','x','=','+','÷'}
+
+    Q:=  {1,2}∪({3,4,5,6,7}×{'2','5','3'})
+    Γ:={'x','q'}
+    q₀:=1
+    F:={6,7}×{'2','5','3'}
+    M:=GPushdownAutomaton(Q,Σ,Γ,q₀,F)
+    M.delta(1,1,'x').push("x")
+    M.delta(1,2,'÷').ignore()
+    M.delta(2,⟨3,'2'⟩,'2').ignore()
+    M.delta(2,⟨3,'3'⟩,'3').ignore()
+    M.delta(2,⟨3,'5'⟩,'5').ignore()
+
+    M.delta(⟨3,'2'⟩,⟨4,'2'⟩,'=').ignore()
+    M.delta(⟨3,'3'⟩,⟨4,'3'⟩,'=').ignore()
+    M.delta(⟨3,'5'⟩,⟨4,'5'⟩,'=').ignore()
+
+    M.delta(⟨4,'2'⟩,⟨4,'2'⟩,'q').pop("xx")
+    M.delta(⟨4,'3'⟩,⟨4,'3'⟩,'q').pop("xxx")
+    M.delta(⟨4,'5'⟩,⟨4,'5'⟩,'q').pop("xxxxx")
+
+    M.delta(⟨4,'2'⟩,⟨5,'2'⟩,'×').ignore()
+    M.delta(⟨5,'2'⟩,⟨6,'2'⟩,'2').ignore()
+    M.delta(⟨6,'2'⟩,⟨7,'2'⟩,'+').$skip("x")
+    M.delta(⟨7,'2'⟩,⟨7,'2'⟩,'r').$skip("x")
+
+    M.delta(⟨4,'3'⟩,⟨5,'3'⟩,'×').ignore()
+    M.delta(⟨5,'3'⟩,⟨6,'3'⟩,'3').ignore()
+    M.delta(⟨6,'3'⟩,⟨7,'3'⟩,'+').$skip("x")
+    M.delta(⟨7,'3'⟩,⟨7,'3'⟩,'r').pop("x")
+
+    M.delta(⟨4,'5'⟩,⟨5,'5'⟩,'×').ignore()
+    M.delta(⟨5,'5'⟩,⟨6,'5'⟩,'5').ignore()
+    M.delta(⟨6,'5'⟩,⟨7,'5'⟩,'+').$skip("x")
+    M.delta(⟨7,'5'⟩,⟨7,'5'⟩,'r').pop("x")
+
+    return M
+end

@@ -1,0 +1,66 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+
+	procedure main(args:String[]) begin
+	Q:={"For","Do","Range","InstructionBlock","EstadoInicial","Error","ConditionBlock","FinalState","While","sip","Initialization","ContinuacionState"}
+	E:={'F','D','R','I','W','C','Z','{','}','(',')'}
+	q0:="EstadoInicial"
+	F:={"sip"}
+	A: GDeterministicAutomaton := GDeterministicAutomaton(Q, E, q0, F, δ)
+	GAutomataFrame.show(A)
+	end	
+	/*
+	 * F= For
+	 * D= Do
+	 * R= Range
+	 * I= InstructionBlock
+	 * C= ConditionBlock
+	 * W= While
+	 * Z= Initialization
+	 * F(R)D{I}
+	 * ZW{C}D{I}
+	 * Me estan saliendo errores de que el input string fue rechazado, para que sepas pero no entiendo :c 
+	 */
+	function δ(s,c) begin
+		if s="EstadoInicial" and c='F' 
+			then return "For"
+		elseif s="For" and c='('
+			then return "Range"
+		elseif s="Range" and c='R'
+			then return "Do"
+		elseif s="Do" and c=')'
+			then return "InstructionBlock"
+		elseif s="InstructionBlock" and c= '{' 
+			then return "FinalState"
+		elseif s="FinalState" and c= 'I'
+			then return "ContinuacionState"
+		elseif s="ContinuacionState" and c='}'
+			then return "sip"	
+		elseif s="EstadoInicial" and c='Z' 
+			then return "Initialization" 
+				
+		elseif s="Initialization" and c='W' 
+			then return "While" 
+			
+		elseif s="While" and c='{'
+			then return "ConditionBlock" 
+				
+		elseif s="ConditionBlock" and c='C'
+			then return "Do" 
+				
+		elseif s="Do" and c='}'
+			then return "InstructionBlock" 
+				
+		elseif s="InstructionBlock" and c= '{' 
+			then return "FinalState" 
+				
+		elseif s="FinalState" and c= 'I'
+			then return "ContinuacionState"
+		elseif s="ContinuacionState" and c='}' 
+			then return "sip"
+		else
+			return "Error" end
+		end
+	
+
+

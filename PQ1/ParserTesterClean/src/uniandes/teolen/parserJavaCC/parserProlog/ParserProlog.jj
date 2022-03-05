@@ -1,0 +1,156 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+PARSER_BEGIN(ParserProlog)
+package uniandes.teolen.parserJavaCC.parserProlog;
+
+import java.util.*;
+ 
+public class ParserProlog {
+  
+boolean encontro = true;
+ArrayList<String> names = new ArrayList<String>();
+} 
+
+PARSER_END(ParserProlog)
+
+SKIP :
+{
+ 	" " | "\r" | "\t" | "\n"
+
+}
+TOKEN : /* OPERATORS */
+{
+    <ARROW: ":-">
+}
+
+TOKEN :
+{
+    < INT: ( <DIGIT> )( <DIGIT> )* >
+|   < #DIGIT: "0" | "1" | "2"| "3" | "4" | "5" |  "6" | "7" | "8" |"9" >
+|   < #MAY: ["A"-"Z"] >
+|   < #MIN: ["a"-"z"] >
+|   < PN: "PN" >
+|   < NP: "NP" >
+|   < PLACES: "PLACES" >
+|   < TRANSITIONS: "TRANSITIONS" >
+|   < VAR:  (<MAY>| < MIN >) ( <MAY > | < MIN > | < DIGIT > )* >
+//|   < PLA:  (names.get())  >
+}
+
+void hr():
+{}
+{
+inicio()
+}
+
+
+void inicio():
+{ }
+{
+<PN> < VAR > c1()
+}
+
+void c1():
+{ }
+{
+(p()) (c2())
+}
+
+void c2():
+{ }
+{(t()) < NP >
+}
+
+
+
+
+void p():
+{ }
+{
+< PLACES > pspecs()
+}
+
+void pspecs():
+{ }
+{
+pspec()(","  pspec())*
+}
+
+void pspec():
+{ }
+{
+var() "(" < INT > ")"
+}
+
+void var():
+{ }
+{
+token = < VAR >
+{names.add(token.image);}
+}
+
+
+
+
+
+
+void t():
+{ }
+{
+<TRANSITIONS>  tspecs()
+}
+
+void tspecs():
+{ }
+{
+tspec()(";"  tspec())*
+}
+
+void tspec():
+{ }
+{
+< VAR > "(" input() "," output() ")"
+}
+
+void input():
+{}
+{
+"{" [places()] "}"
+}
+
+void places():
+{}
+{
+place() ("," place())* 
+}
+
+void place():
+{}
+{
+token = < VAR >
+{
+  encontro = false;
+  for(int i=0;i<names.size();i++) { 
+	String evaluado = (String) names.get(i);
+	if (evaluado.equals(token.image)) { encontro = true; }}
+	//System.out.println(names);
+	//System.out.println(token.image);
+  if (!encontro) {throw new Error("The place hasn't been assigned before: \""+token.image+"\"");}
+}
+}
+
+
+void output():
+{}
+{
+input() 
+}
+
+
+  

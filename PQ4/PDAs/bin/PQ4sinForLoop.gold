@@ -1,0 +1,122 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+
+procedure main(args:String[]) begin
+	GAutomataFrame.show(createAutomaton())
+end
+
+
+function createAutomaton():IPushdownAutomaton begin
+	
+	I2:={"I","x","÷","2","2=","2.2","2.3","2.4","residuo1", "F"} 
+	I3:={"3","3=","3x0","3x1","3x2","3x1d","3x2d","residuo2"}
+	I5:={"5","5=","5x0","5x1","5x2","5x3","5x4","5x1d","5x2d","5x3d","5x4d","residuo3","residuo4"}
+	Q:=I2∪I3∪I5  // Set of states
+	
+	Σ:= {'2','5','3','×','x','q','r','=','+','÷'} 	// input Alphabet
+	Γ:= {'x','$','r'} 			// Alphabet of the Stack
+	
+	q₀:= "I" 				// init state
+	F:={"F"} 			// final states
+	
+	M:=GPushdownAutomaton(Q,Σ,Γ,q₀,F) // Función de transición
+	
+	M.delta("I","x",λ).push("$") // OJO: lambda o ""???
+   M.delta("x","x","x").push("x")
+	M.delta("x","÷",'÷').ignore()
+	
+	
+	// Caso d=2
+	M.delta("÷","2",'2').ignore()
+	M.delta("2","2.1",'=').ignore()
+	M.delta("2.1","2.1",'q').pop("xx")
+	
+	// residuo 0
+	M.delta("2.1","2.2",'×').$skip("$")
+	M.delta("2.2","F",'2').pop("$")
+	
+	// residuo 1	
+	M.delta("2.1","2.3",'×').pop("x")
+	M.delta("2.3","2.4",'2').$skip("$")
+	M.delta("2.4","residuo1",'+').ignore()
+	M.delta("residuo1","F",'r').pop("$")
+	
+	
+	
+	// Caso d=3
+	M.delta("÷","3",'3').ignore()	
+	M.delta("3","3=",'=').ignore()
+	M.delta("3=","3=",'q').pop("xxx")
+	
+	// residuo 0
+	M.delta("3=","3x0",'×').$skip("$")
+	M.delta("3x0","F",'3').pop("$")
+	
+	// residuo 1	
+	M.delta("3=","3x1",'×').pop("x")
+	M.delta("3x1","3x1d",'3').$skip("$")
+	M.delta("3x1d","residuo1",'+').ignore()
+	M.delta("residuo1","F",'r').pop("$")
+	
+	// residuo 2
+	M.delta("3=","3x2",'×').pop("xx")
+	M.delta("3x2","3x2d",'3').$skip("$")
+	M.delta("3x2d","residuo2",'+').ignore()
+	M.delta("residuo2","residuo2",'r').push("r")
+	M.delta("residuo2","F",'r').pop("$r")
+	
+	
+	
+	// Caso d=5
+	M.delta("÷","5",'5').ignore()	
+	M.delta("5","5=",'=').ignore()
+	M.delta("5=","5=",'q').pop("xxxxx")
+	
+	// residuo 0
+	M.delta("5=","5x0",'×').$skip("$")
+	M.delta("5x0","F",'5').pop("$")
+	
+	// residuo 1	
+	M.delta("5=","5x1",'×').pop("x")
+	M.delta("5x1","5x1d",'5').$skip("$")
+	M.delta("5x1d","residuo1",'+').ignore()
+	M.delta("residuo1","F",'r').pop("$")
+	
+	// residuo 2
+	M.delta("5=","5x2",'×').pop("xx")
+	M.delta("5x2","5x2d",'5').$skip("$")
+	M.delta("5x2d","residuo2",'+').ignore()
+	M.delta("residuo2","residuo2",'r').push("r")
+	M.delta("residuo2","F",'r').pop("$r")
+	
+	// residuo 3
+	M.delta("5=","5x3",'×').pop("xxx")
+	M.delta("5x3","5x3d",'5').$skip("$")
+	M.delta("5x3d","residuo3",'+').ignore()
+	M.delta("residuo3","residuo3",'r').push("r")
+	M.delta("residuo3","F",'r').pop("$rr")
+	
+	// residuo 4
+	M.delta("5=","5x4",'×').pop("xxxx")
+	M.delta("5x4","5x4d",'5').$skip("$")
+	M.delta("5x4d","residuo4",'+').ignore()
+	M.delta("residuo4","residuo4",'r').push("r")
+	M.delta("residuo4","F",'r').pop("$rrr")
+	
+	
+	
+	return M
+end
+
+/*
+ * Accepted:
+xxxxxx÷2=qqq×2
+xxxxxx÷5=q×5+r
+xxxxxxxxxxxx÷5=qq×5+rr
+xxxxx÷3=q×3+rr
+* 
+* Not accepted: 
+xxxxxx÷2 = qq×3
+xxxxx÷2 = q×2+rrr
+ * 
+ */

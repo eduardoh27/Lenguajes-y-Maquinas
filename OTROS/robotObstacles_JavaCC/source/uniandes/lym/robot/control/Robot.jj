@@ -1,0 +1,395 @@
+/*
+Gramatica para el Robot:
+Autor: Alejandro Arango
+Modificado por: Silvia Takahashi
+Modificado por: Juan Pablo Morales.
+Agregadas producciones para manejar globos
+Modificado por Silvia Takahashi
+Eliminadas producciones para manejar globos
+Agregado el esqueleto para la traduccion
+Modificado por Silvia Takahashi 
+Re: Agregar Reglas para el manejo de globos
+Modificado por Saulo Daza y Sonia Vivas
+Modificado por Silvia Takahashi
+Eliminadas reglas de traducciï¿½n DE  MARCROS
+Cambio del lenguaje de comandos
+Modificado por Silvia Takahashi: algunas Reglas para traduccion
+Modificado por Silvia Takahashi: Cambio en el lenguaje
+Abril: 2008 - Simplificado apra solo interpretaciï¿½n
+ **/
+
+options 
+{
+	LOOKAHEAD=1; 
+	IGNORE_CASE=false;
+	STATIC = false;
+	
+}
+   
+
+PARSER_BEGIN(Robot)
+
+package uniandes.lym.robot.control;
+
+import uniandes.lym.robot.kernel.*;
+import java.awt.Point;
+import java.io.*;
+import java.util.*;
+import java.util.Vector;
+import java.util.LinkedList;
+import java.util.Random;
+
+@SuppressWarnings("serial")
+public class Robot 
+{
+
+
+	private RobotWorldDec world;
+	
+	
+	void setWorld(RobotWorld w) {
+		world = (RobotWorldDec) w;	
+	}
+
+	String salida=new String();
+
+//
+
+public Hashtable<String, String> variables = new Hashtable<String, String>();
+public String v;
+public String i;
+
+// public ArrayList<String> para = new ArrayList<String>();
+public String n;
+
+public Hashtable<String, ArrayList<String>> funciones = new Hashtable<String, ArrayList<String>>();
+public String f;
+}
+
+PARSER_END(Robot)
+
+SKIP:
+{
+	" "
+|	"\r"
+|	"\t"
+}
+
+TOKEN:
+{
+  < MOVE : "MOVE" >
+| < DROP : "DROP" >
+| < FREE : "FREE" >
+| < PICK : "PICK" > // Error
+| < POP : "POP" >
+| < TURNRIGHT : "RIGHT" >
+| < TURNLEFT : "LEFT" >
+| < LOOK : "LOOK" > // Falta
+| < CHECK : "CHECK" > // Falta
+| < ROTATE : "ROTATE" >
+| < NOP : "NOP" >
+| < #DIGIT : ["0"-"9"] >
+| < INT : (< DIGIT >)+ >
+| < PIF : "IF" >
+| < BLOP : "BLOCKEDP" >
+| < NOBLOP : "!BLOCKEDP" >
+| < BLOCK : "BLOCK" >
+| < DEFINE : "DEFINE" >
+| < REP : "REPEAT" >
+| < TO : "TO" > // Error
+| < OUTP : "OUTPUT" >
+| < END : "END" >
+}
+
+TOKEN:
+{
+  < #LETTER : ["a"-"z"] >
+| < NOMB : < LETTER >(< LETTER >)* >
+}
+
+// Sale un error raro que le mandamos a Diego. No afecta pero igual se imprime.
+
+void instruccion():
+{		
+	int numero;
+	Token x = null;
+	String n;
+	int numDegree;
+	int i = 0; // Para los ciclos
+	salida = new String();
+	boolean estaP = true;
+ 	boolean estaV = true;
+}
+{
+  < MOVE > (x = < INT > {numero = Integer.parseInt(x.image); } { world.moveForward(numero); salida = "Command: MOVE";}
+  			| < NOMB > {estaV = variables.containsKey(token.image); System.out.println(estaV); if (estaV == false) {
+  			  			throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  			  			else{n = variables.get(token.image);
+  			  				 numero = Integer.parseInt(n);
+  			  				 world.moveForward(numero); salida="Command: MOVE";}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  				 		   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  				 		   else{n = variables.get(token.image);
+  				           numero = Integer.parseInt(n);
+  					       world.moveForward(numero); salida="Command: MOVE";}}) "\n"
+
+| < DROP > (x = < INT > {numero = Integer.parseInt(x.image);
+						 world.putChips(numero); salida="Command: DROP";}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  						throw new Error("Variable no declarada anteriormente");}
+  						else{n = variables.get(token.image);
+  							 numero = Integer.parseInt(n);
+  							 world.putChips(numero); salida="Command: DROP";}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  						   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  						   else{n = variables.get(token.image);
+  						   numero = Integer.parseInt(n);
+  						   world.putChips(numero); salida="Command: DROP";}}) "\n"
+
+| < FREE > (x = < INT > {numero = Integer.parseInt(x.image);
+						 world.putBalloons(numero); salida="Command: FREE";}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  						 throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  						 else{n = variables.get(token.image);
+  						      numero = Integer.parseInt(n);
+  					          world.putBalloons(numero); salida="Command: FREE";}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  							throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  							else{n = variables.get(token.image);
+  					 			 numero = Integer.parseInt(n);
+  					 			 world.putBalloons(numero); salida="Command: FREE";}}) "\n"
+
+| < PICK > (< INT > {world.pickupChip(); salida="Command: PICK";}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  						throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  						else{world.pickupChip(); salida="Command: PICK";}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  						   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  						   else{world.pickupChip(); salida="Command: PICK";}}) "\n"
+
+| < POP >  (x = < INT > {numero = Integer.parseInt(x.image);
+						 world.popBalloons(numero);  salida="Command: POP";}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  					    throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  						else {n = variables.get(token.image);
+  						      numero = Integer.parseInt(n);
+  						      world.popBalloons(numero); salida="Command: POP";}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  							throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  							else {n = variables.get(token.image);
+  				      			  numero = Integer.parseInt(n);
+  					  			  world.popBalloons(numero); salida="Command: POP";}}) "\n"
+
+| < ROTATE > (x = < INT > {Random random = new Random();	
+  						   if (random.nextInt(2) == 0){numero = Integer.parseInt(x.image);
+					       							   numDegree = (int) numero / 90;
+					       							   while (i < numDegree) {i += 1; world.turnRight(); salida = "Command: ROTATE";}}
+					       else{numero = Integer.parseInt(x.image);
+					            numDegree = (int) numero / 90;
+					       		while (i < (4 - numDegree)) {i += 1; world.turnRight(); salida = "Command: ROTATE";}}}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  							    throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  							    else {Random random1 = new Random();	
+					       	    if (random1.nextInt(2) == 0){n = variables.get(token.image);
+					       	     					         numero = Integer.parseInt(n);
+					       							         numDegree = (int) numero / 90;
+					       							         while (i < numDegree) {i += 1; world.turnRight(); salida = "Command: ROTATE";}}
+					            else{n = variables.get(token.image);
+					                 numero = Integer.parseInt(n);
+					                 numDegree = (int) numero / 90;
+					       		     while (i < (4 - numDegree)) {i += 1; world.turnRight(); salida = "Command: ROTATE";}}}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+					  			   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+					  			   else {Random random2 = new Random();	
+					  			   if (random2.nextInt(2) == 0){n = variables.get(token.image);
+										     	     			     numero = Integer.parseInt(n);
+										       						 numDegree = (int) numero / 90;
+										       						 while (i < numDegree) {i += 1; world.turnRight(); salida = "Command: ROTATE";}}
+										  else{n = variables.get(token.image);
+										       numero = Integer.parseInt(n);
+										       numDegree = (int) numero / 90;
+										       while (i < (4 - numDegree)) {i += 1; world.turnRight(); salida = "Command: ROTATE";}}}}) "\n"
+
+| < TURNRIGHT > (x = < INT > { numero = Integer.parseInt(x.image);}
+                         { numDegree = (int) numero / 90;
+                         while (i < numDegree){i += 1; world.turnRight(); salida = "Command: RIGHT";}}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  					    throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  					    else {n = variables.get(token.image);
+  					          numero = Integer.parseInt(n);
+                              numDegree = (int) numero / 90;
+                              while (i < numDegree){i += 1; world.turnRight(); salida = "Command: RIGHT";}}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  						   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  						   else {n = variables.get(token.image);
+  					             numero = Integer.parseInt(n);
+                                 numDegree = (int) numero / 90;
+                                 while (i < numDegree){i += 1; world.turnRight(); salida = "Command: RIGHT";}}}) "\n"
+  				
+| < TURNLEFT > (x = < INT > {numero = Integer.parseInt(x.image);
+                         numDegree = (int) numero / 90;
+                         while (i < (4 - numDegree)){i += 1; world.turnRight(); salida = "Command: LEFT";}}
+			| < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  					    throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}
+  					    else {n = variables.get(token.image);
+  					          numero = Integer.parseInt(n);
+                              numDegree = (int) numero / 90;
+                              while (i < (4 - numDegree)){i += 1; world.turnRight(); salida = "Command: LEFT";}}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  						   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}
+  						   else {n = variables.get(token.image);
+  					     		 numero = Integer.parseInt(n);
+                                 numDegree = (int) numero / 90;
+                                 while (i < (4 - numDegree)){i += 1; world.turnRight(); salida = "Command: LEFT";}}}) "\n"
+  				
+| < LOOK > ("N" {if (world.facingEast()) {while (i < 3 ){i += 1; world.turnRight(); salida = "Command: LOOK N";}
+                } else if (world.facingSouth()) {while (i < 2 ){i += 1; world.turnRight(); salida = "Command: LOOK N";}
+                } else if (world.facingWest()) {while (i < 1 ){i += 1; world.turnRight(); salida = "Command: LOOK N";}
+                }}
+			| "W" {if (world.facingNorth()) {while (i < 3 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  } else if (world.facingEast()) {while (i < 2 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  } else if (world.facingSouth()) {while (i < 1 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  }}
+			| "E" {if (world.facingSouth()) {while (i < 3 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  } else if (world.facingWest()) {while (i < 2 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  } else if (world.facingNorth()) {while (i < 1 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  }}
+			| "S" {if (world.facingWest()) {while (i < 3 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  } else if (world.facingNorth()) {while (i < 2 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  } else if (world.facingEast()) {while (i < 1 ){i += 1; world.turnRight(); salida = "Command: LOOK W";}
+                  }}) 
+
+| < CHECK > ("C" | "B")(< INT > | < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  							   			throw new Error("Variable no declarada anteriormente:" + "'" + token.image + "'");}}
+  			| ":"< NOMB > {estaP = variables.containsKey(token.image); if (estaP == false) {
+  						   throw new Error("Parámetro no declarado anteriormente:" + "'" + token.image + "'");}}) "\n"
+
+| < NOP >
+
+}
+
+boolean f(StringBuffer sistema):
+{}
+{
+  (instruccion() | ifs() | repeat() | block() | def() | to() | funct())* {return false;}
+| "\n" {return true;}
+| <EOF> {return false;}
+}
+
+Token variable():
+{}
+{
+  < NOMB >
+  {return token;}
+  
+}
+
+Token num():
+{}
+{
+  < INT >
+  {return token;}
+
+}
+
+void variables():
+{String tv;
+ String ti;
+ Token tokenv;
+ Token tokeni;}
+{
+  tokenv = variable()
+  tokeni = num()
+
+  {tv = tokenv.image;
+   ti = tokeni.image;
+   variables.put(tv, ti);}
+}
+
+void ifs():
+{}
+{
+  < PIF >(< BLOP > | < NOBLOP >)("[" (ins() | block() | def() | repeat() |funct())* "]") "\n"
+}
+
+void ins():
+{}
+{
+  (instruccion())(instruccion())*
+}
+
+void repeat() throws Error:
+{boolean estaV = true;}
+{
+  < REP >(< INT > | < NOMB > {estaV = variables.containsKey(token.image); if (estaV == false) {
+  							   throw new Error("Variable no declarada anteriormente" + "'" + token.image + "'");}})
+  		  ("[" (instruccion())(instruccion())* "]") "\n"
+}
+
+void block():
+{}
+{
+  "(" < BLOCK > "\n" (ins() | ifs() | def() | repeat() | block() | funct())*")" "\n"
+}  														       
+
+void def():
+{}
+{
+  < DEFINE >(variables()) "\n"
+}
+
+ArrayList params():
+{ArrayList<String> para = new ArrayList<String>();}
+{
+  (":"< NOMB > {para.add(token.image); variables.put(token.image, "");}
+  (":"< NOMB > {para.add(token.image); variables.put(token.image, "");} )* )?
+  {return para;}
+}
+
+void funct() throws Error:
+{ArrayList<String> param = new ArrayList<String>();
+ boolean esta = true;
+ ArrayList<String> llave;
+ Token n;
+}
+{
+  (n = < NOMB >) {esta = funciones.containsKey(token.image); if (esta == false) {throw new Error("Funcion no declarada: " + "'" + token.image + "'");}}
+  ((< INT > {param.add(token.image);})(< INT > {param.add(token.image);})*"\n")?
+
+  {llave = funciones.get(n.image);
+   if (llave.size() == param.size()){
+       for (int i = 0; i < param.size(); i++){
+         String elemento = (String) param.get(i);
+         String nombre = (String) llave.get(i);
+         variables.replace(nombre, elemento);
+         }
+    }else if (llave.size() > param.size()){
+     	throw new Error("Faltan parametros en la funcion");
+    }else{
+      throw new Error("Hay mas parametros de los esperados en la funcion");} 
+ }
+}
+
+void to():
+{Token t;
+ ArrayList<String> pa;}
+{
+  < TO > (t = < NOMB >)(pa = params()) {funciones.put(t.image, pa);} "\n"
+  output()
+  end()
+}
+
+
+void output():
+{}
+{
+  < OUTP > "\n" (instruccion() | ifs() | def() | repeat() | block() | funct())*
+}
+
+void end():
+{}
+{
+  < END > "\n"
+}
+
+	

@@ -1,0 +1,15 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+using gold.structures.set.*
+
+procedure main(args:String[]) begin
+	//print "Hola Mundo"
+	Q := {'A', '0'}
+	Σ := {'0', '1'}
+	q := 'A'
+	F := 'B'
+	δ := ⟦⟦⟧⟧
+	A : GDeterministicAutomaton := GDeterministicAutomaton(Q, Σ, q, F, δ)
+	GAutomataFrame.show(A)
+end
+

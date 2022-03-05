@@ -1,0 +1,358 @@
+/*
+ * Eduardo José Herrera Alba 201912865
+ * Ernesto José Duarte 202014279
+ * 
+ * DISCLAIMER: El tiempo de carga es de aproximadamente 3 minutos debido a la complejidad del autómata (26**3 * 15 estados).
+ * UPDATE: A la profesora Silvia le demoró casi 4 minutos en su pc :0 
+ */
+ 
+using gold.**
+
+  
+var MIN
+var MAY
+var MOD3
+var MOD5
+
+procedure main(args:String[]) begin
+	
+	var sc:java.util.Scanner(System.$in)
+	
+	    
+    MIN = ('a'‥'z')
+    MAY = ('A'‥'Z')
+    MOD3 = {0,1,2}
+    MOD5 = {0,1,2,3,4}
+
+    
+	coder:=createCoder()
+   	deCoder:=createDecoder()
+    
+    
+    //Utilities.test(coder)
+    //Utilities.test(deCoder)
+  	Utilities.testCodeDecode (coder, deCoder)
+		
+end
+
+
+
+function createCoder():ITransducer begin
+	
+	A:= MIN // a
+	B:= MIN × MIN // ac
+	C:= MIN × MIN × {':'} // ac:
+	D:= MOD5 × MOD3 × MIN × MIN × {':'} × MIN // 11ac:a
+
+
+	
+	Q:= A ∪ B ∪ C ∪ D ∪ {"I","E","F"}   // states
+	
+	In := MIN ∪ {':', '$'}  // input alphabet
+	Out:= MIN ∪ MAY ∪ {':','#'} ∪ ('0'‥'4')  // output alphabet
+	
+
+	q₀ := "I" // init state
+	F := {"F"} // final state(s)
+
+	return 	GDeterministicTransducer(Q,In,Out,q₀,F,δ,g,h)
+end
+
+
+
+function δ(state, input) begin // state transition
+	if (state="I") and (input in MIN) then return input
+	elseif (state in MIN) and (input in MIN) then return ⟨state, input⟩
+	elseif |state| = 2 and input = ':' then return ⟨state[0], state[1], input⟩
+	elseif |state| = 3 and input in MIN then
+
+		if (input = state[0] or input = state[1]) then return ⟨1, 1, state[0], state[1], state[2], input⟩ 
+		else return ⟨0, 1, state[0], state[1], state[2], input⟩
+		end 
+	
+	elseif |state| = 6 and input in MIN then
+		r,i:=state[0], state[1]
+		
+		if (input = state[2] or input = state[3]) then return ⟨(r+1)mod 5, (i+1)mod 3, state[2], state[3], state[4], input⟩
+		else return ⟨r, (i+1)mod 3, state[2], state[3], state[4], input⟩
+ 		end
+		
+	elseif |state| = 6 and input = '$' then return "F"
+		
+	else return "E"
+	end
+	
+end
+
+
+function g(s) begin // state output
+	return λ
+end
+
+function h(state, input) begin // transition output
+	if state="I"  and (input in MIN) then return input 
+	elseif (state in MIN) and (input in MIN) then return input
+	elseif |state| = 2 and input = ':' then return ':'
+	
+	elseif |state| = 3 and input in MIN then
+
+		if input = state[0] then return state[1]
+		elseif input = state[1] then return state[0]
+		else return upperCase(shiftSymbol(input,1))
+		end
+		
+	elseif |state| = 6 and input in MIN then
+		
+		r,i:=state[0], state[1]
+		
+		if input = state[2] then return state[3]
+		elseif input = state[3] then return state[2]
+		elseif input = state[5] then return '#'
+		elseif ((state[1] + 1) mod 3) = 1 then return upperCase(shiftSymbol(input,1))
+		elseif  ((state[1] + 1) mod 3) = 2 then return upperCase(input)
+		else return input
+		end
+ 		
+	elseif |state| = 6 and input = '$' then return state[0] // d
+	
+	else return λ
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function createDecoder():ITransducer begin
+	
+	A:= MIN // a
+	B:= MIN × MIN // ac
+	C:= MIN × MIN × {':'} // ac:
+	D:= MOD5 × MOD3 × MIN × MIN × {':'} × MIN // 11ac:a
+
+	
+	
+	Q:= A ∪ B ∪ C ∪ D ∪ {"I","E","F"}   // states
+	
+	In:= MIN ∪ MAY ∪ {':','#'} ∪ ('0'‥'4') // input alphabet
+	Out:= MIN ∪ {':', '$'}  // output alphabet
+	
+
+	q₀ := "I" // init state
+	F := {"F"} // final state(s)
+
+	return 	GDeterministicTransducer(Q,In,Out,q₀,F,δ1,g1,h1)
+end
+
+
+function δ1(state, input) begin // state transition
+	
+	if (state="I") and (input in MIN) then return input
+	elseif (state in MIN) and (input in MIN) then return ⟨state, input⟩ 
+	elseif |state| = 2 and input = ':' then return ⟨state[0], state[1], input⟩
+			
+	elseif |state| = 3 and input in MIN then
+		
+		if (input = state[0]) then return ⟨1, 1, state[0], state[1], state[2], state[1]⟩ 
+		elseif (input = state[1] or input = state[1]) then return ⟨1, 1, state[0], state[1], state[2], state[0]⟩			
+		else return "E"
+		end 
+	
+	elseif |state| = 3 and input in MAY then return ⟨0, 1, state[0], state[1], state[2], shiftSymbol(lowerCase(input),-1)⟩ 
+
+
+	 // repl, pos, sigma, alpha, :, sigma_i	
+	 
+	elseif |state| = 6 and input in MIN then
+		r,i:=state[0], state[1]
+		
+		if (input = state[2]) then return ⟨(r+1)mod 5, (i+1)mod 3, state[2], state[3], state[4], state[3]⟩
+		elseif (input = state[3]) then return ⟨(r+1)mod 5, (i+1)mod 3, state[2], state[3], state[4], state[2]⟩
+		else return ⟨r, (i+1)mod 3, state[2], state[3], state[4], input⟩
+ 		end 
+	
+	elseif |state| = 6 and input in MAY then 
+		r,i:=state[0], state[1]
+		if (state[1] + 1 mod 3) = 1 then return ⟨r, (i+1)mod 3, state[2], state[3], state[4], shiftSymbol(lowerCase(input),-1)⟩
+		elseif (state[1] + 1 mod 3) = 2 then return ⟨r, (i+1)mod 3, state[2], state[3], state[4], lowerCase(input)⟩
+		else return "E" // si modulo es 0 no puede ser mayuscula
+		end
+	
+	elseif |state| = 6 and input = '#' then return ⟨state[0], (state[1]+1)mod 3, state[2], state[3], state[4], state[5]⟩ 
+	
+	elseif |state| = 6 and input in ('0'‥'4') and Integer.parseInt(input) = state[0] then return "F" 
+		
+	else return "E"
+	end
+	
+end
+
+
+function g1(s) begin // state output
+	return λ
+end
+
+function h1(state, input) begin // transition output
+	if state="I" and (input in MIN) then return input 
+	elseif (state in MIN) and (input in MIN) then return input
+	elseif |state| = 2 and input = ':' then return ':'
+	
+
+	elseif |state| = 3 and input in MIN then
+
+		if input = state[0] then return state[1]
+		elseif input = state[1] then return state[0]
+		else return input
+		end
+		
+	elseif |state| = 3 and input in MAY then return shiftSymbol(lowerCase(input),-1)
+
+	
+	elseif |state| = 6 and input in MIN then // repl, pos, sigma, alpha, :, sigma_i	
+		
+		r,i:=state[0], state[1]
+		
+		if input = state[2] then return state[3]
+		elseif input = state[3] then return state[2]	
+		else return input 
+		end
+		
+	elseif |state| = 6 and input = '#' then return state[5]	
+	
+	elseif |state| = 6 and input in MAY then
+		if ((state[1] + 1) mod 3) = 1 then return shiftSymbol(lowerCase(input),-1)
+		elseif  ((state[1] + 1) mod 3) = 2 then return lowerCase(input)
+		else return λ
+		end
+ 	
+	elseif |state| = 6 and input in ('0'‥'4') then return '$' // d inv
+	
+	else return λ
+	end
+end
+
+
+
+
+
+
+
+
+
+
+function shiftSymbol(symbol, shift) begin
+	var  r : Character
+  	if symbol in ('a'‥'z') then
+	r:= 'a' + (symbol -'a'+ shift)% 26
+	elseif symbol in ('A'‥'Z') then
+	r:= 'A' + (symbol -'A'+ shift)% 26
+	elseif  symbol in ('0'‥'9') then
+	r:= '0' + (symbol -'0'+ shift)% 10
+	else r:= r
+	end		
+	return r
+end
+
+ function upperCase(minLetter) begin
+	var  r : Character
+
+  	if minLetter = 'a' then r:= 'A'
+	elseif minLetter = 'b' then r:= 'B'
+	elseif minLetter = 'c' then r:= 'C'
+	elseif minLetter = 'd' then r:= 'D'
+	elseif minLetter = 'e' then r:= 'E'
+	elseif minLetter = 'f' then r:= 'F'
+	elseif minLetter = 'g' then r:= 'G'
+	elseif minLetter = 'h' then r:= 'H'
+	elseif minLetter = 'i' then r:= 'I'
+	elseif minLetter = 'j' then r:= 'J'
+	elseif minLetter = 'k' then r:= 'K'
+	elseif minLetter = 'l' then r:= 'L'
+	elseif minLetter = 'm' then r:= 'M'
+	elseif minLetter = 'n' then r:= 'N'
+	elseif minLetter = 'o' then r:= 'O'
+	elseif minLetter = 'p' then r:= 'P'
+	elseif minLetter = 'q' then r:= 'Q'
+	elseif minLetter = 'r' then r:= 'R'
+	elseif minLetter = 's' then r:= 'S'
+	elseif minLetter = 't' then r:= 'T'
+	elseif minLetter = 'u' then r:= 'U'
+	elseif minLetter = 'v' then r:= 'V'
+	elseif minLetter = 'w' then r:= 'W'
+	elseif minLetter = 'x' then r:= 'X'
+	elseif minLetter = 'y' then r:= 'Y'
+	elseif minLetter = 'z' then r:= 'Z'
+		
+	end		
+	return r
+end
+
+
+ function lowerCase(minLetter) begin
+	var  r : Character
+
+  	if minLetter = 'A' then r:= 'a'
+	elseif minLetter = 'B' then r:= 'b'
+	elseif minLetter = 'C' then r:= 'c'
+	elseif minLetter = 'D' then r:= 'd'
+	elseif minLetter = 'E' then r:= 'e'
+	elseif minLetter = 'F' then r:= 'f'
+	elseif minLetter = 'G' then r:= 'g'
+	elseif minLetter = 'H' then r:= 'h'
+	elseif minLetter = 'I' then r:= 'i'
+	elseif minLetter = 'J' then r:= 'j'
+	elseif minLetter = 'K' then r:= 'k'
+	elseif minLetter = 'L' then r:= 'l'
+	elseif minLetter = 'M' then r:= 'm'
+	elseif minLetter = 'N' then r:= 'n'
+	elseif minLetter = 'O' then r:= 'o'
+	elseif minLetter = 'P' then r:= 'p'
+	elseif minLetter = 'Q' then r:= 'q'
+	elseif minLetter = 'R' then r:= 'r'
+	elseif minLetter = 'S' then r:= 's'
+	elseif minLetter = 'T' then r:= 't'
+	elseif minLetter = 'U' then r:= 'u'
+	elseif minLetter = 'V' then r:= 'v'
+	elseif minLetter = 'W' then r:= 'w'
+	elseif minLetter = 'X' then r:= 'x'
+	elseif minLetter = 'Y' then r:= 'y'
+	elseif minLetter = 'Z' then r:= 'z'
+		
+	end		
+	return r
+end
+
+
+/* 
+ac:babcaannnnn$
+ft:aaaaaaa$
+ma:amamamjkslell$
+tt:atatataaat$
+az:aaaaabbbababz$
+xd:amaxmadcatisveeerysweet$
+ch:acatishome$
+*/
+
+/* 
+ac:CcbaccO####4 
+ft:B######0    
+ma:mamamaKKsMEl#1
+tt:BtatAtB##t4 
+az:zzzzzb##zCzba3 
+xd:BMadMaxCaUIsWE##RyTWe#T2 
+ch:BhaUIscOmF2  
+*/
+
+

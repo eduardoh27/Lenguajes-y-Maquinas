@@ -1,0 +1,59 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+using gold.structures.set.*
+
+
+
+procedure main(args:String[]) begin
+	print "Hello World"
+	
+	a:= {0, 1}
+	states := a × (0 ‥ 9)
+	
+	Q := states ∪ {'f'}
+	
+	A := ('0' ‥ '9') ∪ {'$'}
+	O := A
+	
+	q₀:= ⟨ 0, 0⟩
+	F:= {'f'}
+	
+
+	
+	M := GDeterministicTransducer(Q,A,O,q₀,F,delta,g,h)
+	GAutomataFrame.show(M)
+end
+
+
+function g (⟨c,s⟩, d) begin
+	return λ 
+end
+
+function delta (⟨c,s⟩, d) begin
+	//d := Integer.parseInt(d)
+	A:= (1 ‥ 3)
+
+	
+	if d='$' then return 'f' 
+	else 
+	suma := s+d+c	
+	intDiv := 0
+	
+	if (suma >= 10) then intDiv := 1
+	end
+		return ⟨ intDiv, d⟩
+	end
+end
+
+function h (⟨c,s⟩, d) begin
+	//d := Integer.parseInt(d)
+	A:= ('1' ‥ '3')
+	signs := {'+', '-'}					
+	
+	
+	if d='$' then return '$' // FALTA C
+	else return (s+c+d) mod 10  
+	end
+end
+
+

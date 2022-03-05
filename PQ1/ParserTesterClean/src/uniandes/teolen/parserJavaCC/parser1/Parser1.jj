@@ -1,0 +1,128 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+*/
+
+
+
+options
+{
+  static = false;
+}
+
+PARSER_BEGIN(Parser1)
+package uniandes.teolen.parserJavaCC.parser1;
+
+public class Parser1
+{
+  
+}
+
+
+PARSER_END(Parser1)
+
+SKIP :
+{
+  " "
+| "\r" 
+| "\t"
+| "\n"
+}
+
+TOKEN : // OPERATORS 
+{
+  < PLUS : "+" >
+| < MINUS : "-" >
+| < MULTIPLY : "*" >
+| < DIVIDE : "/" >
+}
+
+TOKEN :
+{
+  <INT : (< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+}
+
+int inputLine() :
+{int r=0;}
+{
+  (r = exp() ";" | ";")
+  {
+    return r;
+  }
+}
+
+int exp() :
+{
+  int x, y=0;
+
+// Parses  E -> E + T
+//         E -> E - T
+//         E -> T
+//   in EBNF:  E -> T {+ T   | - T }
+}
+{
+  
+ x = term() ( < PLUS > y=term() {x=x+y; } | < MINUS > y=term() {x=x-y; } )*
+ {
+   return x;
+}
+}
+int term() :
+{int x, y=0;
+
+
+// Parses  T -> T * F
+//         T -> T / F
+//         T -> F
+//   in EBNF:  T -> F {* F   | /  F }
+}
+{
+  
+x= fact() ( < MULTIPLY > y=fact() {x=x*y; } | < DIVIDE > y=fact()
+{x=x/y; }  )*
+{
+ return x; 
+}
+}
+int fact() :
+{
+  int s=1, x;
+}
+
+// Parses  F -> B
+//         F -> -B
+//         B -> num
+//         B -> '(' E ')'
+//   in EBNF:  F -> [-](num |'(' E ')')
+
+{
+    (< MINUS > { s=-1*s; })* (x=num()| "(" x=exp() ")")
+    { return x*s; }
+}
+
+
+int num() throws Error:
+{	
+	int total=1;
+	Token token;
+}
+
+{
+	(token=<INT>)
+
+	{ 
+		try {
+			total = Integer.parseInt(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			// Dada la forma de <ENTERO>, sabemos que solo puede tener digitos 
+			throw new Error("Numero demasiado grande"+token.image);
+		}
+		return total;
+     }
+     
+     
+}
+
+
